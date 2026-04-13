@@ -1,8 +1,10 @@
 """Render Excalidraw JSON to PNG using Playwright + headless Chromium.
 
+Supports both .excalidraw (plain JSON) and .excalidraw.md (Obsidian plugin format).
+
 Usage:
     cd .claude/skills/excalidraw-diagram/references
-    uv run python render_excalidraw.py <path-to-file.excalidraw> [--output path.png] [--scale 2] [--width 1920]
+    uv run python render_excalidraw.py <path-to-file.excalidraw[.md]> [--output path.png] [--scale 2] [--width 1920]
 
 First-time setup:
     cd .claude/skills/excalidraw-diagram/references
@@ -13,9 +15,207 @@ First-time setup:
 from __future__ import annotations
 
 import argparse
+import base64
 import json
+import re
 import sys
+import zlib
 from pathlib import Path
+
+
+def decompress_lzstring_base64(compressed: str) -> str:
+    """Decompress LZ-String base64 encoded data (used by Obsidian Excalidraw plugin)."""
+    # LZ-String uses a custom base64 alphabet and compression scheme.
+    # We'll use the lz-string compatible approach via raw bytes.
+    # The Obsidian plugin uses compressToBase64/decompressFromBase64 from lz-string.
+    # Python port: we need to handle this properly.
+    try:
+        # Try standard base64 + zlib first (some versions use this)
+        decoded = base64.b64decode(compressed)
+        return zlib.decompress(decoded).decode("utf-8")
+    except Exception:
+        pass
+
+    # LZ-String base64 decompression (custom algorithm)
+    # Using the lz-string Python port approach
+    key_str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
+    base_reverse_dict = {key_str[i]: i for i in range(len(key_str))}
+
+    def _get_base_value(char: str) -> int:
+        return base_reverse_dict.get(char, 0)
+
+    length = len(compressed)
+    reset_value = 32
+    data_val = _get_base_value(compressed[0])
+    data_position = 32
+    data_index = 1
+
+    dictionary: dict[int, str] = {}
+    enlarge_in = 4
+    dict_size = 4
+    num_bits = 3
+    result: list[str] = []
+
+    # Read first entry
+    bits = 0
+    max_power = 2**2
+    power = 1
+    while power != max_power:
+        resb = data_val & data_position
+        data_position >>= 1
+        if data_position == 0:
+            data_position = reset_value
+            if data_index < length:
+                data_val = _get_base_value(compressed[data_index])
+                data_index += 1
+        bits |= (1 if resb > 0 else 0) * power
+        power <<= 1
+
+    next_val = bits
+    if next_val == 0:
+        bits = 0
+        max_power = 2**8
+        power = 1
+        while power != max_power:
+            resb = data_val & data_position
+            data_position >>= 1
+            if data_position == 0:
+                data_position = reset_value
+                if data_index < length:
+                    data_val = _get_base_value(compressed[data_index])
+                    data_index += 1
+            bits |= (1 if resb > 0 else 0) * power
+            power <<= 1
+        c = chr(bits)
+    elif next_val == 1:
+        bits = 0
+        max_power = 2**16
+        power = 1
+        while power != max_power:
+            resb = data_val & data_position
+            data_position >>= 1
+            if data_position == 0:
+                data_position = reset_value
+                if data_index < length:
+                    data_val = _get_base_value(compressed[data_index])
+                    data_index += 1
+            bits |= (1 if resb > 0 else 0) * power
+            power <<= 1
+        c = chr(bits)
+    elif next_val == 2:
+        return ""
+
+    dictionary[3] = c
+    w = c
+    result.append(c)
+
+    while True:
+        if data_index > length:
+            return ""
+
+        bits = 0
+        max_power = 2**num_bits
+        power = 1
+        while power != max_power:
+            resb = data_val & data_position
+            data_position >>= 1
+            if data_position == 0:
+                data_position = reset_value
+                if data_index < length:
+                    data_val = _get_base_value(compressed[data_index])
+                    data_index += 1
+            bits |= (1 if resb > 0 else 0) * power
+            power <<= 1
+
+        c_code = bits
+        if c_code == 0:
+            bits = 0
+            max_power = 2**8
+            power = 1
+            while power != max_power:
+                resb = data_val & data_position
+                data_position >>= 1
+                if data_position == 0:
+                    data_position = reset_value
+                    if data_index < length:
+                        data_val = _get_base_value(compressed[data_index])
+                        data_index += 1
+                bits |= (1 if resb > 0 else 0) * power
+                power <<= 1
+            dictionary[dict_size] = chr(bits)
+            dict_size += 1
+            c_code = dict_size - 1
+            enlarge_in -= 1
+        elif c_code == 1:
+            bits = 0
+            max_power = 2**16
+            power = 1
+            while power != max_power:
+                resb = data_val & data_position
+                data_position >>= 1
+                if data_position == 0:
+                    data_position = reset_value
+                    if data_index < length:
+                        data_val = _get_base_value(compressed[data_index])
+                        data_index += 1
+                bits |= (1 if resb > 0 else 0) * power
+                power <<= 1
+            dictionary[dict_size] = chr(bits)
+            dict_size += 1
+            c_code = dict_size - 1
+            enlarge_in -= 1
+        elif c_code == 2:
+            return "".join(result)
+
+        if enlarge_in == 0:
+            enlarge_in = 2**num_bits
+            num_bits += 1
+
+        if c_code in dictionary:
+            entry = dictionary[c_code]
+        elif c_code == dict_size:
+            entry = w + w[0]
+        else:
+            return "".join(result)
+
+        result.append(entry)
+        dictionary[dict_size] = w + entry[0]
+        dict_size += 1
+        enlarge_in -= 1
+
+        if enlarge_in == 0:
+            enlarge_in = 2**num_bits
+            num_bits += 1
+
+        w = entry
+
+
+def extract_excalidraw_json(file_path: Path) -> dict:
+    """Extract Excalidraw JSON from either .excalidraw or .excalidraw.md files."""
+    raw = file_path.read_text(encoding="utf-8")
+
+    if file_path.suffix == ".md" or file_path.name.endswith(".excalidraw.md"):
+        # .excalidraw.md format — look for compressed JSON or raw JSON block
+        compressed_match = re.search(r"```compressed-json\n([\s\S]*?)\n```", raw)
+        if compressed_match:
+            compressed = compressed_match.group(1).replace("\n", "")
+            decompressed = decompress_lzstring_base64(compressed)
+            return json.loads(decompressed)
+
+        # Try raw JSON block
+        json_match = re.search(r"```json\n([\s\S]*?)\n```", raw)
+        if json_match:
+            return json.loads(json_match.group(1))
+
+        # Try finding raw Excalidraw JSON embedded after ## Drawing
+        drawing_match = re.search(r"## Drawing\n([\s\S]*)", raw)
+        if drawing_match:
+            return json.loads(drawing_match.group(1).strip())
+
+        raise ValueError(f"Could not find Excalidraw data in {file_path}")
+    else:
+        # Plain .excalidraw JSON
+        return json.loads(raw)
 
 
 def validate_excalidraw(data: dict) -> list[str]:
@@ -84,12 +284,11 @@ def render(
         print("Run: cd .claude/skills/excalidraw-diagram/references && uv sync && uv run playwright install chromium", file=sys.stderr)
         sys.exit(1)
 
-    # Read and validate
-    raw = excalidraw_path.read_text(encoding="utf-8")
+    # Read and validate (supports both .excalidraw and .excalidraw.md)
     try:
-        data = json.loads(raw)
-    except json.JSONDecodeError as e:
-        print(f"ERROR: Invalid JSON in {excalidraw_path}: {e}", file=sys.stderr)
+        data = extract_excalidraw_json(excalidraw_path)
+    except (json.JSONDecodeError, ValueError) as e:
+        print(f"ERROR: Could not parse {excalidraw_path}: {e}", file=sys.stderr)
         sys.exit(1)
 
     errors = validate_excalidraw(data)
@@ -110,9 +309,14 @@ def render(
     vp_width = min(int(diagram_w), max_width)
     vp_height = max(int(diagram_h), 600)
 
-    # Output path
+    # Output path (handle .excalidraw.md → .png correctly)
     if output_path is None:
-        output_path = excalidraw_path.with_suffix(".png")
+        if excalidraw_path.name.endswith(".excalidraw.md"):
+            output_path = excalidraw_path.with_name(
+                excalidraw_path.name.replace(".excalidraw.md", ".png")
+            )
+        else:
+            output_path = excalidraw_path.with_suffix(".png")
 
     # Template path (same directory as this script)
     template_path = Path(__file__).parent / "render_template.html"
@@ -170,8 +374,8 @@ def render(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Render Excalidraw JSON to PNG")
-    parser.add_argument("input", type=Path, help="Path to .excalidraw JSON file")
+    parser = argparse.ArgumentParser(description="Render Excalidraw JSON to PNG (supports .excalidraw and .excalidraw.md)")
+    parser.add_argument("input", type=Path, help="Path to .excalidraw or .excalidraw.md file")
     parser.add_argument("--output", "-o", type=Path, default=None, help="Output PNG path (default: same name with .png)")
     parser.add_argument("--scale", "-s", type=int, default=2, help="Device scale factor (default: 2)")
     parser.add_argument("--width", "-w", type=int, default=1920, help="Max viewport width (default: 1920)")

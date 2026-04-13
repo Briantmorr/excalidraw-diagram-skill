@@ -1,6 +1,6 @@
 # Element Templates
 
-Copy-paste JSON templates for each Excalidraw element type. The `strokeColor` and `backgroundColor` values are placeholders — always pull actual colors from `color-palette.md` based on the element's semantic purpose.
+Copy-paste JSON templates for each Excalidraw element type. All colors come from `color-palette.md`. All shapes use black borders, Virgil font, max roughness, and rounded corners.
 
 ## Free-Floating Text (no container)
 ```json
@@ -12,15 +12,15 @@ Copy-paste JSON templates for each Excalidraw element type. The `strokeColor` an
   "text": "Section Title",
   "originalText": "Section Title",
   "fontSize": 20,
-  "fontFamily": 3,
+  "fontFamily": 1,
   "textAlign": "left",
   "verticalAlign": "top",
-  "strokeColor": "<title color from palette>",
+  "strokeColor": "#0a0a0a",
   "backgroundColor": "transparent",
   "fillStyle": "solid",
   "strokeWidth": 1,
   "strokeStyle": "solid",
-  "roughness": 0,
+  "roughness": 1,
   "opacity": 100,
   "angle": 0,
   "seed": 11111,
@@ -43,12 +43,12 @@ Copy-paste JSON templates for each Excalidraw element type. The `strokeColor` an
   "id": "line1",
   "x": 100, "y": 100,
   "width": 0, "height": 200,
-  "strokeColor": "<structural line color from palette>",
+  "strokeColor": "#3a3428",
   "backgroundColor": "transparent",
   "fillStyle": "solid",
   "strokeWidth": 2,
   "strokeStyle": "solid",
-  "roughness": 0,
+  "roughness": 1,
   "opacity": 100,
   "angle": 0,
   "seed": 44444,
@@ -70,12 +70,12 @@ Copy-paste JSON templates for each Excalidraw element type. The `strokeColor` an
   "id": "dot1",
   "x": 94, "y": 94,
   "width": 12, "height": 12,
-  "strokeColor": "<marker dot color from palette>",
-  "backgroundColor": "<marker dot color from palette>",
+  "strokeColor": "#000000",
+  "backgroundColor": "#3a3428",
   "fillStyle": "solid",
   "strokeWidth": 1,
   "strokeStyle": "solid",
-  "roughness": 0,
+  "roughness": 1,
   "opacity": 100,
   "angle": 0,
   "seed": 66666,
@@ -89,18 +89,18 @@ Copy-paste JSON templates for each Excalidraw element type. The `strokeColor` an
 }
 ```
 
-## Rectangle
+## Rectangle (default shape for most nodes)
 ```json
 {
   "type": "rectangle",
   "id": "elem1",
   "x": 100, "y": 100, "width": 180, "height": 90,
-  "strokeColor": "<stroke from palette based on semantic purpose>",
+  "strokeColor": "#000000",
   "backgroundColor": "<fill from palette based on semantic purpose>",
   "fillStyle": "solid",
   "strokeWidth": 2,
   "strokeStyle": "solid",
-  "roughness": 0,
+  "roughness": 1,
   "opacity": 100,
   "angle": 0,
   "seed": 12345,
@@ -115,6 +115,31 @@ Copy-paste JSON templates for each Excalidraw element type. The `strokeColor` an
 }
 ```
 
+## Diamond (for decision points ONLY)
+```json
+{
+  "type": "diamond",
+  "id": "decision1",
+  "x": 100, "y": 100, "width": 160, "height": 100,
+  "strokeColor": "#000000",
+  "backgroundColor": "#fff9db",
+  "fillStyle": "solid",
+  "strokeWidth": 2,
+  "strokeStyle": "solid",
+  "roughness": 1,
+  "opacity": 100,
+  "angle": 0,
+  "seed": 12345,
+  "version": 1,
+  "versionNonce": 67890,
+  "isDeleted": false,
+  "groupIds": [],
+  "boundElements": [{"id": "dec_text1", "type": "text"}],
+  "link": null,
+  "locked": false
+}
+```
+
 ## Text (centered in shape)
 ```json
 {
@@ -125,10 +150,10 @@ Copy-paste JSON templates for each Excalidraw element type. The `strokeColor` an
   "text": "Process",
   "originalText": "Process",
   "fontSize": 16,
-  "fontFamily": 3,
+  "fontFamily": 1,
   "textAlign": "center",
   "verticalAlign": "middle",
-  "strokeColor": "<text color — match parent shape's stroke or use 'on light/dark fills' from palette>",
+  "strokeColor": "#0a0a0a",
   "backgroundColor": "transparent",
   "fillStyle": "solid",
   "strokeWidth": 1,
@@ -149,18 +174,45 @@ Copy-paste JSON templates for each Excalidraw element type. The `strokeColor` an
 }
 ```
 
+## Callout / Annotation Box (yellow with gold text)
+```json
+{
+  "type": "rectangle",
+  "id": "callout1",
+  "x": 100, "y": 100, "width": 170, "height": 60,
+  "strokeColor": "#000000",
+  "backgroundColor": "#fff9db",
+  "fillStyle": "solid",
+  "strokeWidth": 1,
+  "strokeStyle": "solid",
+  "roughness": 1,
+  "opacity": 100,
+  "angle": 0,
+  "seed": 12345,
+  "version": 1,
+  "versionNonce": 67890,
+  "isDeleted": false,
+  "groupIds": [],
+  "boundElements": [{"id": "callout_text1", "type": "text"}],
+  "link": null,
+  "locked": false,
+  "roundness": {"type": 3}
+}
+```
+Callout text uses `strokeColor: "#6b5a10"` (dark gold) instead of black.
+
 ## Arrow
 ```json
 {
   "type": "arrow",
   "id": "arrow1",
   "x": 282, "y": 145, "width": 118, "height": 0,
-  "strokeColor": "<arrow color — typically matches source element's stroke from palette>",
+  "strokeColor": "#3a3428",
   "backgroundColor": "transparent",
   "fillStyle": "solid",
   "strokeWidth": 2,
   "strokeStyle": "solid",
-  "roughness": 0,
+  "roughness": 1,
   "opacity": 100,
   "angle": 0,
   "seed": 33333,
@@ -180,3 +232,31 @@ Copy-paste JSON templates for each Excalidraw element type. The `strokeColor` an
 ```
 
 For curves: use 3+ points in `points` array.
+
+## Section Divider (horizontal)
+```json
+{
+  "type": "rectangle",
+  "id": "divider1",
+  "x": 100, "y": 400, "width": 600, "height": 3,
+  "strokeColor": "#000000",
+  "backgroundColor": "#000000",
+  "fillStyle": "solid",
+  "strokeWidth": 1,
+  "strokeStyle": "solid",
+  "roughness": 0,
+  "opacity": 100,
+  "angle": 0,
+  "seed": 88888,
+  "version": 1,
+  "versionNonce": 99999,
+  "isDeleted": false,
+  "groupIds": [],
+  "boundElements": null,
+  "link": null,
+  "locked": false,
+  "roundness": null
+}
+```
+
+For vertical dividers: swap width/height (e.g., `"width": 3, "height": 400`). Use `roughness: 0` — dividers should be sharp, not sketchy.

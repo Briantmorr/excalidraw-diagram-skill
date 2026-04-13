@@ -5,7 +5,7 @@ description: Create Excalidraw diagram JSON files that make visual arguments. Us
 
 # Excalidraw Diagram Creator
 
-Generate `.excalidraw` JSON files that **argue visually**, not just display information.
+Generate `.excalidraw.md` files (Obsidian-native format) that **argue visually**, not just display information.
 
 **Setup:** If the user asks you to set up this skill (renderer, dependencies, etc.), see `README.md` for instructions.
 
@@ -418,7 +418,7 @@ Position alone doesn't show relationships. If A relates to B, there must be an a
 }
 ```
 
-Settings: `fontSize: 16`, `fontFamily: 3`, `textAlign: "center"`, `verticalAlign: "middle"`
+Settings: `fontSize: 16`, `fontFamily: 1`, `textAlign: "center"`, `verticalAlign: "middle"`
 
 ---
 
@@ -438,6 +438,70 @@ Settings: `fontSize: 16`, `fontFamily: 3`, `textAlign: "center"`, `verticalAlign
 }
 ```
 
+## Output Format: `.excalidraw.md`
+
+The skill outputs `.excalidraw.md` files — the Obsidian Excalidraw plugin's native markdown format. This gives you frontmatter, tags, auto-export, and full Obsidian integration (graph, backlinks, embeds).
+
+### File Structure
+
+```markdown
+---
+excalidraw-plugin: parsed
+tags: [excalidraw]
+excalidraw-autoexport: png
+---
+
+# Excalidraw Data
+## Text Elements
+<text elements listed here with ^blockIds>
+
+## Drawing
+```json
+<full excalidraw JSON here>
+`` `
+```
+
+### How to Generate
+
+After building the elements JSON array, wrap it in the `.excalidraw.md` format:
+
+1. Build your elements array as normal (using element-templates.md)
+2. Extract all text elements to create the `## Text Elements` section (each with a `^blockId`)
+3. Write the full JSON under `## Drawing`
+4. Add the frontmatter with `excalidraw-plugin: parsed` and `excalidraw-autoexport: png`
+
+**The `## Text Elements` section** lists the readable text content of each text element, one per entry, each ending with `^elementId`. This enables Obsidian full-text search of diagram content.
+
+**Example text elements section:**
+```
+## Text Elements
+User Utterance
+"Show Walmart plans" ^user_t
+
+LLM Slot Extraction
+keyword, status, top ^llm_t
+```
+
+### Frontmatter Options
+
+| Property | Value | Purpose |
+|----------|-------|---------|
+| `excalidraw-plugin` | `parsed` | Required — tells plugin this is an Excalidraw file |
+| `tags` | `[excalidraw]` | Makes diagrams searchable by tag |
+| `excalidraw-autoexport` | `png` | Auto-exports PNG on save in Obsidian |
+| `excalidraw-export-dark` | `false` | Keep light theme for exports |
+| `excalidraw-export-padding` | `20` | Export padding in pixels |
+
+### Rendering
+
+The Playwright renderer handles both formats:
+
+```bash
+cd .claude/skills/excalidraw-diagram/references && uv run python render_excalidraw.py <path-to-file.excalidraw.md>
+```
+
+The renderer extracts JSON from `.excalidraw.md` files automatically. Use this for the validation loop during generation. Obsidian auto-export handles PNGs after that.
+
 ## Element Templates
 
 See `references/element-templates.md` for copy-paste JSON templates for each element type (text, line, dot, rectangle, arrow). Pull colors from `references/color-palette.md` based on each element's semantic purpose.
@@ -451,10 +515,10 @@ You cannot judge a diagram from JSON alone. After generating or editing the Exca
 ### How to Render
 
 ```bash
-cd .claude/skills/excalidraw-diagram/references && uv run python render_excalidraw.py <path-to-file.excalidraw>
+cd .claude/skills/excalidraw-diagram/references && uv run python render_excalidraw.py <path-to-file.excalidraw.md>
 ```
 
-This outputs a PNG next to the `.excalidraw` file. Then use the **Read tool** on the PNG to actually view it.
+This outputs a PNG next to the `.excalidraw.md` file. Then use the **Read tool** on the PNG to actually view it.
 
 ### The Loop
 
@@ -537,8 +601,8 @@ uv run playwright install chromium
 
 ### Technical
 16. **Text clean**: `text` contains only readable words
-17. **Font**: `fontFamily: 3`
-18. **Roughness**: `roughness: 0` for clean/modern (unless hand-drawn style requested)
+17. **Font**: `fontFamily: 1` (Virgil / Excalifont hand-drawn default)
+18. **Roughness**: `roughness: 1` for hand-drawn feel (use `roughness: 0` only for dividers)
 19. **Opacity**: `opacity: 100` for all elements (no transparency)
 20. **Container ratio**: <30% of text elements should be inside containers
 

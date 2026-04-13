@@ -1,62 +1,110 @@
-# Color Palette & Brand Style
+# Color Palette & Style Guide
 
-**This is the single source of truth for all colors and brand-specific styles.** To customize diagrams for your own brand, edit this file — everything else in the skill is universal.
+**This is the single source of truth for all colors, fonts, and shape styles.** To customize diagrams for your own brand, edit this file — everything else in the skill is universal.
+
+---
+
+## Font
+
+All text uses the Excalidraw default hand-drawn font:
+
+| Property | Value |
+|----------|-------|
+| `fontFamily` | `1` (Virgil / Excalifont) |
+
+Never use `fontFamily: 3` (monospace) unless rendering code snippets.
+
+---
+
+## Shape Style Defaults
+
+All shapes share these properties unless otherwise specified:
+
+| Property | Value |
+|----------|-------|
+| `strokeColor` | `#000000` (black borders on everything) |
+| `roughness` | `1` (hand-drawn but controlled) |
+| `roundness` | `{"type": 3}` (rounded corners on rectangles) |
+| `fillStyle` | `"solid"` |
+| `strokeWidth` | `2` (use `3` for primary/orchestrator emphasis) |
 
 ---
 
 ## Shape Colors (Semantic)
 
-Colors encode meaning, not decoration. Each semantic purpose has a fill/stroke pair.
+Soft, warm fills with black borders. All text inside shapes is black — the fill provides grouping, not the text color.
 
-| Semantic Purpose | Fill | Stroke |
-|------------------|------|--------|
-| Primary/Neutral | `#3b82f6` | `#1e3a5f` |
-| Secondary | `#60a5fa` | `#1e3a5f` |
-| Tertiary | `#93c5fd` | `#1e3a5f` |
-| Start/Trigger | `#fed7aa` | `#c2410c` |
-| End/Success | `#a7f3d0` | `#047857` |
-| Warning/Reset | `#fee2e2` | `#dc2626` |
-| Decision | `#fef3c7` | `#b45309` |
-| AI/LLM | `#ddd6fe` | `#6d28d9` |
-| Inactive/Disabled | `#dbeafe` | `#1e40af` (use dashed stroke) |
-| Error | `#fecaca` | `#b91c1c` |
+| Semantic Purpose | Fill | Notes |
+|------------------|------|-------|
+| Primary/Core | `#eae8e4` | Warm grey — orchestrators, main components |
+| AI/LLM | `#e7f5ff` | Light blue — AI processing, intelligence |
+| Start/Trigger | `#e0f4e8` | Soft green — entry points, user actions |
+| End/Success | `#e4f0e0` | Warm green — successful outcomes |
+| Decision | `#fff9db` | Light yellow — **use diamond shape** |
+| Warning/Callout | `#fff9db` | Light yellow — annotation boxes, explanatory notes |
+| Error | `#ffd4d0` | Warm red — **ONLY for actual error states/failures** |
+| External/API | `#fff4e0` | Warm cream — external services, APIs |
+| Accent/Highlight | `#e7f5ff` | Light blue — emphasis, key elements |
+| Inactive/Disabled | `#f0f0f0` | Light grey — use dashed stroke |
 
-**Rule**: Always pair a darker stroke with a lighter fill for contrast.
+**Rules:**
+- All borders are `#000000` (black). No colored strokes.
+- Fills are soft/warm — never bold or saturated.
+- Decision points **must** use diamond shapes, not rectangles.
+- Yellow boxes (`#fff9db`) with dark gold text (`#6b5a10`) serve as callout/annotation notes.
+- Red (`#ffd4d0`) is **reserved strictly for error states**. Do not use it for prompts, warnings, disambiguation, or anything that isn't an actual error/failure. Use warm cream (`#fff4e0`) or grey (`#eae8e4`) for non-error interactive states.
 
 ---
 
 ## Text Colors (Hierarchy)
 
-Use color on free-floating text to create visual hierarchy without containers.
+All text defaults to black. Use weight and size for hierarchy.
 
 | Level | Color | Use For |
 |-------|-------|---------|
-| Title | `#1e40af` | Section headings, major labels |
-| Subtitle | `#3b82f6` | Subheadings, secondary labels |
-| Body/Detail | `#64748b` | Descriptions, annotations, metadata |
-| On light fills | `#374151` | Text inside light-colored shapes |
-| On dark fills | `#ffffff` | Text inside dark-colored shapes |
+| Title | `#0a0a0a` | Main headings (fontSize 24-28) |
+| Subtitle | `#555555` | Subheadings, secondary labels (fontSize 14-16) |
+| Body/Detail | `#6b6b6b` | Descriptions, metadata (fontSize 12-14) |
+| On shapes | `#0a0a0a` | Text inside any filled shape (always black) |
+| Callout text | `#6b5a10` | Text inside yellow annotation boxes |
+| Muted/Annotation | `#888888` | De-emphasized labels (yes/no on arrows, optional info) |
+
+---
+
+## Arrow & Line Colors
+
+| Element | Color |
+|---------|-------|
+| Arrows | `#3a3428` (warm charcoal) |
+| Structural lines | `#3a3428` |
+
+Arrows use `roughness: 1` like everything else. Use `strokeWidth: 2`.
+
+---
+
+## Section Dividers
+
+Use a **filled black rectangle** with minimal height (horizontal) or minimal width (vertical) as a visual divider between diagram sections. This improves clarity when organizing content into rows or columns.
+
+| Orientation | Width | Height | Fill | Stroke |
+|-------------|-------|--------|------|--------|
+| Horizontal divider | `(span of section)` | `3` | `#000000` | `#000000` |
+| Vertical divider | `3` | `(span of section)` | `#000000` | `#000000` |
+
+Properties: `roughness: 0` (sharp, not sketchy), `fillStyle: "solid"`, `roundness: null`, `strokeWidth: 1`, `opacity: 100`.
+
+Place dividers between logical sections (e.g., separating "Input" from "Processing" from "Output" rows).
 
 ---
 
 ## Evidence Artifact Colors
 
-Used for code snippets, data examples, and other concrete evidence inside technical diagrams.
+Used for code snippets, data examples inside diagrams.
 
 | Artifact | Background | Text Color |
 |----------|-----------|------------|
-| Code snippet | `#1e293b` | Syntax-colored (language-appropriate) |
-| JSON/data example | `#1e293b` | `#22c55e` (green) |
-
----
-
-## Default Stroke & Line Colors
-
-| Element | Color |
-|---------|-------|
-| Arrows | Use the stroke color of the source element's semantic purpose |
-| Structural lines (dividers, trees, timelines) | Primary stroke (`#1e3a5f`) or Slate (`#64748b`) |
-| Marker dots (fill + stroke) | Primary fill (`#3b82f6`) |
+| Code snippet | `#1e293b` | `#e2e8f0` (light grey) with `#7dd3fc` (cyan) for keywords |
+| JSON/data example | `#1e293b` | `#86efac` (green) |
 
 ---
 
