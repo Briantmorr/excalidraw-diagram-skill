@@ -235,6 +235,37 @@ def validate_excalidraw(data: dict) -> list[str]:
     return errors
 
 
+def check_layout_warnings(data: dict) -> list[str]:
+    """Non-blocking checks for text overflow and element collisions."""
+    warnings: list[str] = []
+    try:
+        from utils.bounds import calculate_excalidraw_bounds
+        from utils.collisions import detect_collisions
+    except ImportError:
+        return warnings  # utils not available, skip checks
+
+    for el in data.get("elements", []):
+        if el.get("type") == "text" and not el.get("isDeleted"):
+            bounds = calculate_excalidraw_bounds(
+                el.get("text", ""),
+                el.get("fontFamily", 1),
+                el.get("fontSize", 20),
+                current_width=el.get("width"),
+                current_height=el.get("height"),
+            )
+            if bounds.get("overflowDetected"):
+                warnings.append(
+                    f"  WARNING: text '{el.get('id', '?')}' may overflow "
+                    f"(needs ~{bounds['textWidth']}x{bounds['textHeight']}, "
+                    f"has {el.get('width', 0)}x{el.get('height', 0)})"
+                )
+
+    collision_warnings = detect_collisions(data.get("elements", []), min_gap=20.0)
+    warnings.extend(f"  WARNING: {w}" for w in collision_warnings)
+
+    return warnings
+
+
 def compute_bounding_box(elements: list[dict]) -> tuple[float, float, float, float]:
     """Compute bounding box (min_x, min_y, max_x, max_y) across all elements."""
     min_x = float("inf")
@@ -297,6 +328,13 @@ def render(
         for err in errors:
             print(f"  - {err}", file=sys.stderr)
         sys.exit(1)
+
+    # Non-blocking layout warnings (overflow, collisions)
+    warnings = check_layout_warnings(data)
+    if warnings:
+        print("Layout warnings:", file=sys.stderr)
+        for w in warnings:
+            print(w, file=sys.stderr)
 
     # Compute viewport size from element bounding box
     elements = [e for e in data["elements"] if not e.get("isDeleted")]
