@@ -5,7 +5,7 @@ description: Create Excalidraw diagram JSON files that make visual arguments. Us
 
 # Excalidraw Diagram Creator
 
-Generate `.excalidraw.md` files (Obsidian-native format) that **argue visually**, not just display information.
+Generate `.excalidraw` files (plain JSON) that **argue visually**, not just display information.
 
 **Setup:** If the user asks you to set up this skill (renderer, dependencies, etc.), see `README.md` for instructions.
 
@@ -422,7 +422,15 @@ Settings: `fontSize: 16`, `fontFamily: 1`, `textAlign: "center"`, `verticalAlign
 
 ---
 
-## JSON Structure
+## Output Format: `.excalidraw`
+
+The skill outputs `.excalidraw` files — plain Excalidraw JSON. The Obsidian Excalidraw plugin reads these natively.
+
+**Do NOT use `.excalidraw.md`** (the plugin's markdown wrapper format). The `## Text Elements` section in `.excalidraw.md` files uses `^blockId` markers as delimiters; on load/save the plugin re-parses and merges text across markers, creating corrupted giant text blocks that overlap the diagram.
+
+### File Structure
+
+Just the raw Excalidraw JSON:
 
 ```json
 {
@@ -438,69 +446,20 @@ Settings: `fontSize: 16`, `fontFamily: 1`, `textAlign: "center"`, `verticalAlign
 }
 ```
 
-## Output Format: `.excalidraw.md`
+### Linking to Source Code
 
-The skill outputs `.excalidraw.md` files — the Obsidian Excalidraw plugin's native markdown format. This gives you frontmatter, tags, auto-export, and full Obsidian integration (graph, backlinks, embeds).
+Use `vscode://file/` URIs in the `link` property to open source files directly from diagram elements:
 
-### File Structure
-
-```markdown
----
-excalidraw-plugin: parsed
-tags: [excalidraw]
-excalidraw-autoexport: png
----
-
-# Excalidraw Data
-## Text Elements
-<text elements listed here with ^blockIds>
-
-## Drawing
 ```json
-<full excalidraw JSON here>
-`` `
+{
+  "type": "rectangle",
+  "id": "my_node",
+  "link": "vscode://file//absolute/path/to/file.yaml:25",
+  ...
+}
 ```
 
-### How to Generate
-
-After building the elements JSON array, wrap it in the `.excalidraw.md` format:
-
-1. Build your elements array as normal (using element-templates.md)
-2. Extract all text elements to create the `## Text Elements` section (each with a `^blockId`)
-3. Write the full JSON under `## Drawing`
-4. Add the frontmatter with `excalidraw-plugin: parsed` and `excalidraw-autoexport: png`
-
-**The `## Text Elements` section** lists the readable text content of each text element, one per entry, each ending with `^elementId`. This enables Obsidian full-text search of diagram content.
-
-**Example text elements section:**
-```
-## Text Elements
-User Utterance
-"Show Walmart plans" ^user_t
-
-LLM Slot Extraction
-keyword, status, top ^llm_t
-```
-
-### Frontmatter Options
-
-| Property | Value | Purpose |
-|----------|-------|---------|
-| `excalidraw-plugin` | `parsed` | Required — tells plugin this is an Excalidraw file |
-| `tags` | `[excalidraw]` | Makes diagrams searchable by tag |
-| `excalidraw-autoexport` | `png` | Auto-exports PNG on save in Obsidian |
-| `excalidraw-export-dark` | `false` | Keep light theme for exports |
-| `excalidraw-export-padding` | `20` | Export padding in pixels |
-
-### Rendering
-
-The Playwright renderer handles both formats:
-
-```bash
-cd .claude/skills/excalidraw-diagram/references && uv run python render_excalidraw.py <path-to-file.excalidraw.md>
-```
-
-The renderer extracts JSON from `.excalidraw.md` files automatically. Use this for the validation loop during generation. Obsidian auto-export handles PNGs after that.
+The `:LINE` suffix opens the file at that specific line number.
 
 ## Element Templates
 
@@ -515,10 +474,10 @@ You cannot judge a diagram from JSON alone. After generating or editing the Exca
 ### How to Render
 
 ```bash
-cd .claude/skills/excalidraw-diagram/references && uv run python render_excalidraw.py <path-to-file.excalidraw.md>
+cd .claude/skills/excalidraw-diagram/references && uv run python render_excalidraw.py <path-to-file.excalidraw> --output /tmp/preview.png
 ```
 
-This outputs a PNG next to the `.excalidraw.md` file. Then use the **Read tool** on the PNG to actually view it.
+This outputs a PNG to `/tmp/` for verification. **Never output PNGs into the Obsidian vault** — the plugin renders diagrams natively. Use the **Read tool** on the PNG to view it.
 
 ### The Loop
 
