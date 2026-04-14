@@ -448,7 +448,11 @@ Just the raw Excalidraw JSON:
 
 ### Linking to Source Code
 
-Use `vscode://file/` URIs in the `link` property to open source files directly from diagram elements:
+When diagramming a real codebase, link diagram elements to their implementation files so clicking a shape in Obsidian opens the source in VS Code.
+
+#### Link Format
+
+Use `vscode://file/` URIs in the `link` property. The `:LINE` suffix opens at that specific line.
 
 ```json
 {
@@ -459,7 +463,40 @@ Use `vscode://file/` URIs in the `link` property to open source files directly f
 }
 ```
 
-The `:LINE` suffix opens the file at that specific line number.
+#### Which Elements to Link
+
+Link elements that represent **concrete implementation steps** — not labels, arrows, or annotations. Typically:
+
+| Element | Links to |
+|---------|----------|
+| Process rectangles (orchestrators, agents) | Scenario/agent definition file |
+| Function/API rectangles | Function definition file |
+| Decision diamonds | The condition logic (scenario or function that evaluates it) |
+
+**Don't link**: free-floating text labels, arrows, start/end ellipses, or UI-only shapes.
+
+#### Discovery Workflow
+
+When the user asks you to diagram a repo with source links:
+
+1. **Explore the repo structure** — identify the directory convention (e.g., `scenarios/`, `functions/`, `agents/`, `src/`, `lib/`)
+2. **Map diagram concepts to files** — for each process/function in the diagram, find the file that defines it. Use Grep to search for function names, class names, or config keys
+3. **Find the right line number** — link to the definition line (e.g., the `name:` field in a YAML, the function signature in code), not line 1. Read the file and pick the most meaningful entry point
+4. **Use absolute paths** — `vscode://file/` requires absolute paths. Resolve from the repo root
+5. **Verify links exist** — after generating, spot-check that linked files and line numbers are still valid
+
+#### Example: Mapping a Capability to Links
+
+For a Joule-style scenario → function → API flow:
+
+```
+User Utterance → LLM Slot Extraction → Orchestrator → OData Call → Result
+```
+
+- "LLM Slot Extraction" → `scenarios/my_scenario.yaml:10` (the slot extraction config)
+- "Orchestrator" → `scenarios/my_scenario.yaml:10` or `agents/my_agent.yaml:1`
+- "OData Call" → `functions/my_function.yaml:25` (the function definition)
+- "Result" → no link (it's an output, not an implementation)
 
 ## Element Templates
 
