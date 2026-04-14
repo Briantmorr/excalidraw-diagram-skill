@@ -260,3 +260,30 @@ For curves: use 3+ points in `points` array.
 ```
 
 For vertical dividers: swap width/height (e.g., `"width": 3, "height": 400`). Use `roughness: 0` — dividers should be sharp, not sketchy.
+
+## Web Embeddable (iframe)
+```json
+{
+  "type": "embeddable",
+  "id": "embed1",
+  "x": 100, "y": 100, "width": 500, "height": 350,
+  "link": "https://en.wikipedia.org/wiki/Beaver",
+  "strokeColor": "#000000",
+  "backgroundColor": "#eae8e4",
+  "fillStyle": "solid",
+  "strokeWidth": 2,
+  "strokeStyle": "solid",
+  "roughness": 1,
+  "opacity": 100,
+  "angle": 0,
+  "seed": 12345,
+  "version": 1,
+  "versionNonce": 67890,
+  "isDeleted": false,
+  "groupIds": [],
+  "boundElements": null,
+  "locked": false,
+  "roundness": {"type": 3}
+}
+```
+The `link` property holds the URL. In Obsidian, the plugin renders this as a live iframe. In the headless PNG renderer, it appears as a rectangle showing the URL text. Not all sites allow iframe embedding (X-Frame-Options). Wikipedia, YouTube, and many docs sites work well.

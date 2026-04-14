@@ -498,9 +498,60 @@ User Utterance → LLM Slot Extraction → Orchestrator → OData Call → Resul
 - "OData Call" → `functions/my_function.yaml:25` (the function definition)
 - "Result" → no link (it's an output, not an implementation)
 
+### Web Embeds (Live Iframes)
+
+The Obsidian Excalidraw plugin supports `type: "embeddable"` elements that render as live iframes on the canvas. Use these to create curated link boards, research grids, or reference dashboards.
+
+#### Element Structure
+
+An embeddable is a standard shape with `"type": "embeddable"` and the URL in `"link"`. See `references/element-templates.md` for the full JSON template.
+
+```json
+{
+  "type": "embeddable",
+  "id": "embed_0",
+  "link": "https://en.wikipedia.org/wiki/Beaver",
+  "x": 0, "y": 30, "width": 500, "height": 350,
+  ...
+}
+```
+
+#### Grid Layout Pattern
+
+When the user asks to embed multiple URLs, arrange them in a labeled grid:
+
+1. **Choose grid dimensions** — 2 columns works well for most screens. Rows = ceil(count / cols).
+2. **Cell sizing** — 500×350px per embeddable is a good default. Add a 30px text label above each one.
+3. **Spacing** — 40px gap between cells (both horizontal and vertical).
+4. **Labels** — Free-floating text above each embeddable identifying the site name.
+
+**Grid coordinate formula:**
+```
+col = index % num_cols
+row = index // num_cols
+x = col * (cell_width + gap)
+y = row * (cell_height + gap + label_height)
+```
+
+The label goes at `(x, y)` and the embeddable at `(x, y + label_height)`.
+
+#### Iframe Compatibility
+
+Not all websites allow iframe embedding — servers can block it via `X-Frame-Options` or `Content-Security-Policy`. Sites that generally work:
+- Wikipedia, YouTube, Vimeo
+- Documentation sites (MDN, ReadTheDocs)
+- Many `.org` and `.edu` sites
+
+Sites that typically block iframes:
+- Google (Docs, Sheets, Search)
+- Social media (Twitter/X, Facebook, LinkedIn)
+- Most news sites
+
+When generating a grid, prefer sites likely to allow embedding. If the user provides specific URLs, use them as-is — some will show and some won't.
+
 ## Element Templates
 
-See `references/element-templates.md` for copy-paste JSON templates for each element type (text, line, dot, rectangle, arrow). Pull colors from `references/color-palette.md` based on each element's semantic purpose.
+See `references/element-templates.md` for copy-paste JSON templates for each element type (text, line, dot, rectangle, arrow, embeddable). Pull colors from `references/color-palette.md` based on each element's semantic purpose.
 
 ---
 
