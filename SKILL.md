@@ -521,7 +521,7 @@ An embeddable is a standard shape with `"type": "embeddable"` and the URL in `"l
 When the user asks to embed multiple URLs, arrange them in a labeled grid:
 
 1. **Choose grid dimensions** — 2 columns works well for most screens. Rows = ceil(count / cols).
-2. **Cell sizing** — 500×350px per embeddable is a good default. Add a 30px text label above each one.
+2. **Cell sizing** — 500×350px per embeddable is a good default. Height must never exceed width (landscape orientation always). Add a 30px text label above each one.
 3. **Spacing** — 40px gap between cells (both horizontal and vertical).
 4. **Labels** — Free-floating text above each embeddable identifying the site name.
 
